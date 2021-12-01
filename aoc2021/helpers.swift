@@ -624,7 +624,7 @@ func MD5(of string: String) -> String {
 }
 
 // adapted from https://www.raywenderlich.com/947-swift-algorithm-club-swift-linked-list-data-structure
-class LinkedNode<Element> {
+public class LinkedNode<Element> {
 	var value: Element
 	weak var prev: LinkedNode?
 	var next: LinkedNode?
@@ -634,23 +634,58 @@ class LinkedNode<Element> {
 	}
 }
 
-class LinkedList<Element> {
-	private var head: LinkedNode<Element>?
-	private var tail: LinkedNode<Element>?
-
-	public var isEmpty: Bool {
-	return head == nil
+public class List<Element> {
+	var head: LinkedNode<Element>?
+	var tail: LinkedNode<Element>?
+	
+	init() {
+		head = nil
+		tail = nil
+	}
+	
+	init(_ array: Array<Element>) {
+		guard let first = array.first else {
+			head = nil
+			tail = nil
+			return
+		}
+		var node = LinkedNode(first)
+		head = node
+		var i = 1
+		while i < array.count {
+			let newNode = LinkedNode(array[i])
+			node.next = newNode
+			newNode.prev = node
+			node = newNode
+			i += 1
+		}
+		tail = node
 	}
 
-	public var first: Element? {
+	var isEmpty: Bool {
+		return head == nil
+	}
+
+	var first: Element? {
 		return head?.value
 	}
 
-	public var last: Element? {
+	var last: Element? {
 		return tail?.value
 	}
 	
-	public func append(_ newElement: Element) {
+	func prepend(_ newElement: Element) {
+		let newNode = LinkedNode(newElement)
+		if let headNode = head {
+			newNode.next = headNode
+			headNode.prev = newNode
+		} else {
+			tail = newNode
+		}
+		head = newNode
+	}
+	
+	func append(_ newElement: Element) {
 		let newNode = LinkedNode(newElement)
 		if let tailNode = tail {
 			newNode.prev = tailNode
@@ -660,9 +695,53 @@ class LinkedList<Element> {
 		}
 		tail = newNode
 	}
+	
+	func removeFirst() {
+		head = head?.next
+	}
+	
+	func removeLast() {
+		tail = tail?.prev
+	}
+	
+	func removeFirst(_ n: Int) {
+		for _ in stride(from: 0, to: n, by: 1) {
+			removeFirst()
+		}
+	}
+	
+	func removeLast(_ n: Int) {
+		for _ in stride(from: 0, to: n, by: 1) {
+			removeLast()
+		}
+	}
+	
+	func popLast() -> Element? {
+		let v = tail?.value
+		tail = tail?.prev
+		return v
+	}
+	
+	func popFirst() -> Element? {
+		let v = head?.value
+		head = head?.next
+		return v
+	}
 }
 
-class LinkedCycle<Element>: CustomStringConvertible {
+extension List where Element: AdditiveArithmetic {
+	public func sum() -> Element {
+		guard var current = head else { return .zero }
+		var sum = current.value
+		while let next = current.next {
+			sum += next.value
+			current = next
+		}
+		return sum
+	}
+}
+
+class Cycle<Element>: CustomStringConvertible {
 	private var currentNode: LinkedNode<Element>?
 	
 	var current: Element? { currentNode?.value }

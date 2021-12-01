@@ -150,6 +150,10 @@ public extension Collection where Element: Numeric {
 	func sum() -> Element {
 		return self.reduce(0) { x,y in x+y }
 	}
+	
+	func sum(_ partialResult: (Element) -> Element) -> Element {
+		self.reduce(.zero, { $0 + partialResult($1) })
+	}
 }
 
 public extension Collection where Element: AdditiveArithmetic {
@@ -243,6 +247,12 @@ public extension Array {
 public extension Array where Element: Equatable {
 	func fullSplit(separator: Element) -> Array<Self> {
 		return self.split(whereSeparator: { $0 == separator}).map { Self($0) }
+	}
+}
+
+public extension Range where Element: AdditiveArithmetic {
+	func sum(_ partialResult: (Element) -> Element) -> Element {
+		self.reduce(.zero, { $0 + partialResult($1) })
 	}
 }
 

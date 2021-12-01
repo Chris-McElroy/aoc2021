@@ -634,13 +634,45 @@ public class LinkedNode<Element> {
 	}
 }
 
-public class List<Element> {
+public class List<Element>: ExpressibleByArrayLiteral {
 	var head: LinkedNode<Element>?
 	var tail: LinkedNode<Element>?
 	
 	init() {
 		head = nil
 		tail = nil
+	}
+	
+	public typealias ArrayLiteralElement = Element
+	public required init(arrayLiteral elements: Element...) {
+		guard let first = elements.first else {
+			head = nil
+			tail = nil
+			return
+		}
+		var node = LinkedNode(first)
+		head = node
+		var i = 1
+		while i < elements.count {
+			let newNode = LinkedNode(elements[i])
+			node.next = newNode
+			newNode.prev = node
+			node = newNode
+			i += 1
+		}
+		tail = node
+	}
+	
+	init<Source>(_ sequence: Source) where Element == Source.Element, Source : Sequence {
+		var node: LinkedNode<Element>?
+		for (i, v) in sequence.enumerated() {
+			let newNode = LinkedNode(v)
+			node?.next = newNode
+			newNode.prev = node
+			node = newNode
+			if i == 0 { head = newNode }
+		}
+		tail = node
 	}
 	
 	init(_ array: Array<Element>) {
@@ -661,7 +693,7 @@ public class List<Element> {
 		}
 		tail = node
 	}
-
+	
 	var isEmpty: Bool {
 		return head == nil
 	}

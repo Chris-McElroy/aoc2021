@@ -10,7 +10,7 @@ import Foundation
 func d1() {
 	let input = inputInts()
 	let max = input.max()!
-	let prev = List([max, max, max])
+	let prev: List = [max, max, max]
 	var a1 = 0
 	var a2 = 0
 	
@@ -23,3 +23,5 @@ func d1() {
 	}
 	print(a1, a2)
 }
+
+// 1754 1789

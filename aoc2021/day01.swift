@@ -8,20 +8,10 @@
 import Foundation
 
 func d1() {
-	let input = inputInts()
-	let max = input.max()!
-	let prev: List = [max, max, max]
-	var a1 = 0
-	var a2 = 0
-	
-	for n in inputInts() {
-		a1 += (n > prev.last!).int
-		let oldSum = prev.sum()
-		prev.removeFirst()
-		prev.append(n)
-		a2 += (prev.sum() > oldSum).int
-	}
-	print(a1, a2)
+	let depths = inputInts()
+	print((1..<depths.count).reduce(0) { $0 + (depths[$1] > depths[$1 - 1]).int })
+	print((3..<depths.count).reduce(0) { $0 + (depths[$1] > depths[$1 - 3]).int })
 }
 
-// 1754 1789
+// 1754
+// 1789

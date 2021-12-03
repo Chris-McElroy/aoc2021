@@ -75,6 +75,12 @@ func make2DArray<Element>(repeating repeatedValue: Element, count1: Int, count2:
 	(0..<count1).map { _ in Array(repeating: repeatedValue, count: count2) }
 }
 
+public extension Collection {
+	func sum<N: AdditiveArithmetic>(_ partialResult: (Element) -> N) -> N {
+		self.reduce(.zero, { $0 + partialResult($1) })
+	}
+}
+
 public extension Collection where Indices.Iterator.Element == Index {
 	func first(_ k: Int) -> SubSequence {
 		return self.dropLast(count-k)

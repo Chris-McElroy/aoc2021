@@ -27,8 +27,8 @@ func d4() {
 		for (j, board) in boards.enumerated() where !wins.contains(j) {
 			guard let i = board.firstIndex(of: n) else { continue }
 			hits[j].insert(i)
-			let worksV = (0..<5).count { hits[j].contains(5*$0 + (i % 5)) } == 5
-			let worksH = (0..<5).count { hits[j].contains(5*(i/5) + $0) } == 5
+			let worksV = (0..<5).all { hits[j].contains(5*$0 + (i % 5)) }
+			let worksH = (0..<5).all { hits[j].contains(5*(i/5) + $0) }
 			if worksH || worksV {
 				wins.insert(j)
 				if wins.count == 1 || wins.count == boards.count {

@@ -83,6 +83,16 @@ public extension Collection {
 	func count(where predicate: (Element) -> Bool) -> Int {
 		self.reduce(0, { $0 + predicate($1).int })
 	}
+	
+	func any(where predicate: (Element) -> Bool) -> Bool {
+		for e in self where predicate(e) { return true }
+		return false
+	}
+	
+	func all(where predicate: (Element) -> Bool) -> Bool {
+		for e in self where !predicate(e) { return false }
+		return true
+	}
 }
 
 public extension Collection where Indices.Iterator.Element == Index {
@@ -135,6 +145,18 @@ public extension Collection where Indices.Iterator.Element == Index {
 	
 	func toTuple() -> (Element, Element, Element, Element, Element) {
 		return (self[0 as! Self.Index], self[1 as! Self.Index], self[2 as! Self.Index], self[3 as! Self.Index], self[4 as! Self.Index])
+	}
+}
+
+public extension Collection where Element == Bool {
+	func any() -> Bool {
+		for e in self where e { return true }
+		return false
+	}
+	
+	func all() -> Bool {
+		for e in self where !e { return false }
+		return true
 	}
 }
 

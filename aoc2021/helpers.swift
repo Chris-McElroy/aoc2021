@@ -79,6 +79,10 @@ public extension Collection {
 	func sum<N: AdditiveArithmetic>(_ partialResult: (Element) -> N) -> N {
 		self.reduce(.zero, { $0 + partialResult($1) })
 	}
+	
+	func count(where predicate: (Element) -> Bool) -> Int {
+		self.reduce(0, { $0 + predicate($1).int })
+	}
 }
 
 public extension Collection where Indices.Iterator.Element == Index {

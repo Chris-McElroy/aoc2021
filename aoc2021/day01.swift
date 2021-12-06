@@ -9,8 +9,8 @@ import Foundation
 
 func d1() {
 	let depths = inputInts()
-	print((1..<depths.count).sum { (depths[$0] > depths[$0 - 1]).int })
-	print((3..<depths.count).sum { (depths[$0] > depths[$0 - 3]).int })
+	print((1..<depths.count).count { depths[$0] > depths[$0 - 1] })
+	print((3..<depths.count).count { depths[$0] > depths[$0 - 3] })
 }
 
 // 1754

@@ -15,8 +15,7 @@ func d6() {
 		fishD[fish, default: 0] += 1
 	}
 	
-	for g in 0..<256 {
-		print(g)
+	for g in 1...256 {
 		var newFishD: [Int: Int] = [:]
 		newFishD[6] = fishD[0]
 		newFishD[8] = fishD[0]

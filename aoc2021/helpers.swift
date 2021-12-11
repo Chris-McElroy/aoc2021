@@ -31,7 +31,7 @@ public func inputInts(_ separator: String = "\n") -> [Int] {
 	return input.compactMap { Int($0) ?? nil }
 }
 
-public func inputWords(_ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [[String]] {
+public func inputWords(_ wordSeparators: [String], _ lineSeparator: String = "\n") -> [[String]] {
 	var words = inputStrings(lineSeparator).map { [$0] }
 	for wordSeparator in wordSeparators {
 		words = words.map { line in line.flatMap { $0.components(separatedBy: wordSeparator) } }
@@ -40,31 +40,37 @@ public func inputWords(_ wordSeparators: [String] = [" "], _ lineSeparator: Stri
 	return words
 }
 
-public func inputSomeInts(words: [Int], _ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [[Int]] {
+public func inputWords(_ wordSeparator: String = " ", _ lineSeparator: String = "\n") -> [[String]] {
+	if wordSeparator == "" {
+		return inputStrings(lineSeparator).map { $0.map { String($0) } }
+	}
+	return inputStrings(lineSeparator).map { $0.components(separatedBy: wordSeparator).filter { $0 != "" } }
+}
+
+public func inputSomeInts(words: [Int], _ wordSeparators: [String], _ lineSeparator: String = "\n") -> [[Int]] {
 	let input = inputWords(wordSeparators, lineSeparator)
 	return words.map { word in input.map { line in Int(line[word])! } }
 }
 
-//public func inputAllInts() -> [[Int]] {
-//	let input = inputStrings()
-//	var output: [[Int]] = []
-//	var currentInt: String = ""
-//	for line in input {
-//		var lineInts: [Int] = []
-//		for c in line {
-//			if c.isNumber || (c == "-" && currentInt == "") {
-//				currentInt.append(c)
-//			} else if currentInt != "" {
-//				lineInts.append(Int(currentInt)!)
-//				currentInt = ""
-//			}
-//		}
-//		output.append(lineInts)
-//	}
-//	return output
-//}
+public func inputSomeInts(words: [Int], _ wordSeparator: String = " ", _ lineSeparator: String = "\n") -> [[Int]] {
+	let input = inputWords(wordSeparator, lineSeparator)
+	return words.map { word in input.map { line in Int(line[word])! } }
+}
 
-public func inputOneInt(word: Int, _ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [Int] {
+public func inputIntArray(_ wordSeparators: [String], _ lineSeparator: String = "\n") -> [[Int]] {
+	inputWords(wordSeparators, lineSeparator).map { $0.map { Int($0)! } }
+}
+
+public func inputIntArray(_ wordSeparator: String = " ", _ lineSeparator: String = "\n") -> [[Int]] {
+	inputWords(wordSeparator, lineSeparator).map { $0.map { Int($0)! } }
+}
+
+public func inputOneInt(word: Int, _ wordSeparator: String = " ", _ lineSeparator: String = "\n") -> [Int] {
+	let input = inputWords(wordSeparator, lineSeparator)
+	return input.map { line in Int(line[word])! }
+}
+
+public func inputOneInt(word: Int, _ wordSeparators: [String], _ lineSeparator: String = "\n") -> [Int] {
 	let input = inputWords(wordSeparators, lineSeparator)
 	return input.map { line in Int(line[word])! }
 }
@@ -211,7 +217,7 @@ public extension Array {
 		return self[index(startIndex, offsetBy: i % count)]
 	}
 	
-	subscript(s i: Int) -> Iterator.Element? {
+	subscript(opt i: Int) -> Iterator.Element? {
 		if i < 0 || i >= count { return nil }
 		return self[i]
 	}
@@ -276,6 +282,44 @@ public extension Array {
 	}
 }
 
+public extension Array where Element: MutableCollection {
+	internal func coordinated() -> [(C2, Self.Element.Element)] {
+		enumerated().flatMap { y, m1 in
+			m1.enumerated().map { x, v in (C2(x, y), v) }
+		}
+	}
+	
+	internal func allPoints() -> [C2] {
+		enumerated().flatMap { y, m1 in
+			m1.enumerated().map { x, _ in C2(x, y) }
+		}
+	}
+	
+	internal subscript(_ p: C2) -> Self.Element.Element {
+		get {
+			self[p.y][p.x as! Element.Index]
+		}
+		set {
+			self[p.y][p.x as! Element.Index] = newValue
+		}
+	}
+	
+	internal subscript(opt p: C2) -> Self.Element.Element? {
+		get {
+			inbound(p) ? self[p] : nil
+		}
+		set {
+			if let v = newValue, inbound(p) {
+				self[p] = v
+			}
+		}
+	}
+	
+	internal func inbound(_ p: C2) -> Bool {
+		(0..<count).contains(p.y) && (0..<self[0].count).contains(p.x)
+	}
+}
+
 public extension Array where Element: Equatable {
 	func fullSplit(separator: Element) -> Array<Self> {
 		return self.split(whereSeparator: { $0 == separator}).map { Self($0) }
@@ -334,7 +378,7 @@ public extension String {
 		return self[index(startIndex, offsetBy: i % count)]
 	}
 	
-	subscript(s i: Int) -> Character? {
+	subscript(opt i: Int) -> Character? {
 		if i < 0 || i >= count { return nil }
 		return self[i]
 	}
@@ -676,20 +720,33 @@ public class LinkedNode<Element> {
 	}
 }
 
-public class List<Element>: ExpressibleByArrayLiteral {
+public struct ListIterator<Element>: IteratorProtocol {
+	var current: LinkedNode<Element>?
+	
+	public mutating func next() -> Element? {
+		let v = current?.value
+		current = current?.next
+		return v
+	}
+}
+
+public struct List<Element>: ExpressibleByArrayLiteral, Sequence {
 	var head: LinkedNode<Element>?
 	var tail: LinkedNode<Element>?
+	var count: Int
 	
 	init() {
 		head = nil
 		tail = nil
+		count = 0
 	}
 	
 	public typealias ArrayLiteralElement = Element
-	public required init(arrayLiteral elements: Element...) {
+	public init(arrayLiteral elements: Element...) {
 		guard let first = elements.first else {
 			head = nil
 			tail = nil
+			count = 0
 			return
 		}
 		var node = LinkedNode(first)
@@ -703,15 +760,18 @@ public class List<Element>: ExpressibleByArrayLiteral {
 			i += 1
 		}
 		tail = node
+		count = elements.count
 	}
 	
 	init<Source>(_ sequence: Source) where Element == Source.Element, Source : Sequence {
+		count = 0
 		var node: LinkedNode<Element>?
 		for (i, v) in sequence.enumerated() {
 			let newNode = LinkedNode(v)
 			node?.next = newNode
 			newNode.prev = node
 			node = newNode
+			count += 1
 			if i == 0 { head = newNode }
 		}
 		tail = node
@@ -721,6 +781,7 @@ public class List<Element>: ExpressibleByArrayLiteral {
 		guard let first = array.first else {
 			head = nil
 			tail = nil
+			count = 0
 			return
 		}
 		var node = LinkedNode(first)
@@ -734,6 +795,11 @@ public class List<Element>: ExpressibleByArrayLiteral {
 			i += 1
 		}
 		tail = node
+		count = array.count
+	}
+	
+	public func makeIterator() -> ListIterator<Element> {
+		ListIterator(current: head)
 	}
 	
 	var isEmpty: Bool {
@@ -748,7 +814,7 @@ public class List<Element>: ExpressibleByArrayLiteral {
 		return tail?.value
 	}
 	
-	func prepend(_ newElement: Element) {
+	mutating func prepend(_ newElement: Element) {
 		let newNode = LinkedNode(newElement)
 		if let headNode = head {
 			newNode.next = headNode
@@ -757,9 +823,10 @@ public class List<Element>: ExpressibleByArrayLiteral {
 			tail = newNode
 		}
 		head = newNode
+		count += 1
 	}
 	
-	func append(_ newElement: Element) {
+	mutating func append(_ newElement: Element) {
 		let newNode = LinkedNode(newElement)
 		if let tailNode = tail {
 			newNode.prev = tailNode
@@ -768,35 +835,40 @@ public class List<Element>: ExpressibleByArrayLiteral {
 			head = newNode
 		}
 		tail = newNode
+		count += 1
 	}
 	
-	func removeFirst() {
+	mutating func removeFirst() {
+		if !isEmpty { count -= 1 }
 		head = head?.next
 	}
 	
-	func removeLast() {
+	mutating func removeLast() {
+		if !isEmpty { count -= 1 }
 		tail = tail?.prev
 	}
 	
-	func removeFirst(_ n: Int) {
+	mutating func removeFirst(_ n: Int) {
 		for _ in stride(from: 0, to: n, by: 1) {
 			removeFirst()
 		}
 	}
 	
-	func removeLast(_ n: Int) {
+	mutating func removeLast(_ n: Int) {
 		for _ in stride(from: 0, to: n, by: 1) {
 			removeLast()
 		}
 	}
 	
-	func popLast() -> Element? {
+	mutating func popLast() -> Element? {
+		if !isEmpty { count -= 1 }
 		let v = tail?.value
 		tail = tail?.prev
 		return v
 	}
 	
-	func popFirst() -> Element? {
+	mutating func popFirst() -> Element? {
+		if !isEmpty { count -= 1 }
 		let v = head?.value
 		head = head?.next
 		return v
@@ -889,26 +961,46 @@ class Cycle<Element>: CustomStringConvertible {
 	}
 }
 
-func bfs<T>(startingWith start: Set<T>, searchFor solution: ((T, Int, Set<T>) -> Bool) = { _,_,_ in false }, expandUsing search: (T) -> [T], continueWhile shouldContinue: (Int, Set<T>) -> Bool) {
-	var steps = 0
-	var found: Set<T> = []
-	var current: Set<T> = start
-	
-	w: while shouldContinue(steps, found) && !current.isEmpty {
-		steps += 1
-		var next: Set<T> = []
+public extension Set {
+	/// Breadth first search function
+	///
+	/// Starts with the given set, which has values added to it as their found
+	///
+	/// Note that this automatically stops when there's nothing left to search!
+	///
+	/// - Parameter search: (expandUsing) Function of current value and all found values.
+	///   Should return all the new values to inpsect as solutions or continue searching with
+	/// - Parameter shouldContinue: (continueWhile) Function of number of steps and all found values.
+	///   Should return a bool indicating whether the search should continue.
+	///   Note that whether there are new values to search is handled automatically!
+	///   Implicitly set to return true.
+	/// - Parameter solution: (stopIf)  Function of value, number of steps done, and all found values.
+	///   Should return true if the search should stop (if this is a solution).
+	///   Implicitly set to return false.
+	/// - Returns: all found values
+	@discardableResult func bfs(expandUsing search: (Element, Self) -> [Element], continueWhile shouldContinue: (Int, Self) -> Bool = { _, _ in true }, stopIf solution: ((Element, Int, Self) -> Bool) = { _,_,_ in false }) -> Self {
+		var steps = 0
+		var current = self
+		var found = self
 		
-		for a in current {
-			for b in search(a) {
-				if solution(b, steps, found) { break w }
-				
-				if found.insert(b).inserted {
-					next.insert(b)
+		while shouldContinue(steps, found) && !current.isEmpty {
+			steps += 1
+			var next: Self = []
+			
+			for a in current {
+				for b in search(a, found) {
+					if solution(b, steps, found) { return found }
+					
+					if found.insert(b).inserted {
+						next.insert(b)
+					}
 				}
 			}
+			
+			current = next
 		}
 		
-		current = next
+		return found
 	}
 }
 

@@ -62,7 +62,7 @@ public func inputIntArray(_ wordSeparators: [String], _ lineSeparator: String = 
 }
 
 public func inputIntArray(_ wordSeparator: String = " ", _ lineSeparator: String = "\n") -> [[Int]] {
-	inputWords(wordSeparator, lineSeparator).map { $0.map { Int($0)! } }
+	inputWords(wordSeparator, lineSeparator).map { $0.compactMap { Int($0) } }.filter { $0 != [] }
 }
 
 public func inputOneInt(word: Int, _ wordSeparator: String = " ", _ lineSeparator: String = "\n") -> [Int] {
@@ -79,6 +79,28 @@ public func inputOneInt(word: Int, _ wordSeparators: [String], _ lineSeparator: 
 
 func make2DArray<Element>(repeating repeatedValue: Element, count1: Int, count2: Int) -> [[Element]] {
 	(0..<count1).map { _ in Array(repeating: repeatedValue, count: count2) }
+}
+
+func print2DArray(width: Int, height: Int, shouldPrint: (C2) -> Bool) {
+	for y in 0..<height {
+		var line = ""
+		for x in 0..<width {
+			line.append(shouldPrint(C2(x, y)) ? "█" : " ")
+		}
+		print(line)
+	}
+	print()
+}
+
+func print2DArray(width: Int, height: Int, character: (C2) -> Character) {
+	for y in 0..<height {
+		var line = ""
+		for x in 0..<width {
+			line.append(character(C2(x, y)))
+		}
+		print(line)
+	}
+	print()
 }
 
 public extension Collection {

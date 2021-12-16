@@ -521,6 +521,18 @@ public extension StringProtocol {
 		
 		return output
 	}
+	
+	func hexToInt() -> Int {
+		return Int(self, radix: 16)!
+	}
+	
+	func hexToBinaryArray() -> [Int] {
+		flatMap { $0.hexToBinaryArray() }
+	}
+	
+	func hexToBinaryString() -> String {
+		map({ $0.hexToBinaryString() }).joined()
+	}
 }
 
 public extension Character {
@@ -534,6 +546,52 @@ public extension Character {
 			}
 		}
 		return lhs
+	}
+	
+	func hexToInt() -> Int {
+		return Int(String(self), radix: 16)!
+	}
+	
+	func hexToBinaryArray() -> [Int] {
+		switch self {
+		case "0": return [0, 0, 0, 0]
+		case "1": return [0, 0, 0, 1]
+		case "2": return [0, 0, 1, 0]
+		case "3": return [0, 0, 1, 1]
+		case "4": return [0, 1, 0, 0]
+		case "5": return [0, 1, 0, 1]
+		case "6": return [0, 1, 1, 0]
+		case "7": return [0, 1, 1, 1]
+		case "8": return [1, 0, 0, 0]
+		case "9": return [1, 0, 0, 1]
+		case "A": return [1, 0, 1, 0]
+		case "B": return [1, 0, 1, 1]
+		case "C": return [1, 1, 0, 0]
+		case "D": return [1, 1, 0, 1]
+		case "E": return [1, 1, 1, 0]
+		default: return [1, 1, 1, 1]
+		}
+	}
+	
+	func hexToBinaryString() -> String {
+		switch self {
+		case "0": return "0000"
+		case "1": return "0001"
+		case "2": return "0010"
+		case "3": return "0011"
+		case "4": return "0100"
+		case "5": return "0101"
+		case "6": return "0110"
+		case "7": return "0111"
+		case "8": return "1000"
+		case "9": return "1001"
+		case "A": return "1010"
+		case "B": return "1011"
+		case "C": return "1100"
+		case "D": return "1101"
+		case "E": return "1110"
+		default: return "1111"
+		}
 	}
 }
 

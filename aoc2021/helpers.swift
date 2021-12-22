@@ -121,6 +121,28 @@ public extension Collection {
 		for e in self where !predicate(e) { return false }
 		return true
 	}
+	
+	func map<T>(after predicate: (Element) -> Bool, _ transform: (Element) throws -> T) rethrows -> [T] {
+		var started: Bool = false
+		var newArray: [T] = []
+		for e in self {
+			if started {
+				newArray.append(try transform(e))
+			} else {
+				started = predicate(e)
+			}
+		}
+		return newArray
+	}
+	
+	func map<T>(while predicate: (Element) -> Bool, _ transform: (Element) throws -> T) rethrows -> [T] {
+		var newArray: [T] = []
+		for e in self {
+			if !predicate(e) { break }
+			newArray.append(try transform(e))
+		}
+		return newArray
+	}
 }
 
 public extension Collection where Indices.Iterator.Element == Index {
@@ -598,16 +620,26 @@ public extension Character {
 extension RangeReplaceableCollection {
 	// from https://stackoverflow.com/questions/25162500/apple-swift-generate-combinations-with-repetition
 	// I should use rangereplacablecollection for everything i think
-	func combinations(of n: Int) -> [SubSequence] {
+	func combinationsWithReplacement(length n: Int) -> [Self] {
 		guard n > 0 else { return [.init()] }
 		guard let first = first else { return [] }
-		return combinations(of: n - 1).map { CollectionOfOne(first) + $0 } + dropFirst().combinations(of: n)
+		return combinationsWithReplacement(length: n - 1).map { Self([first]) + $0 } + Self(dropFirst()).combinationsWithReplacement(length: n)
 	}
-	func uniqueCombinations(of n: Int) -> [SubSequence] {
+	
+	func combinationsWithoutReplacement(length n: Int) -> [Self] {
 		guard n > 0 else { return [.init()] }
 		guard let first = first else { return [] }
-		return dropFirst().uniqueCombinations(of: n - 1).map { CollectionOfOne(first) + $0 } + dropFirst().uniqueCombinations(of: n)
+		return Self(dropFirst()).combinationsWithoutReplacement(length: n - 1).map { Self([first]) + $0 } + Self(dropFirst()).combinationsWithoutReplacement(length: n)
 	}
+	
+	// TODO do this for range replacable
+	// TODO do all of these for sets
+//	// permutations from https://stackoverflow.com/questions/34968470/calculate-all-permutations-of-a-string-in-swift
+//	func permutations(actually i do want a length) -> [Self] {
+////		guard cou > 0 else { return [.init()] }
+//		if isEmpty { return [Self()] }
+//		let next Self(dropFirst()).permutations() (length: n - 1).map { Self([first]) + $0 } + Self(dropFirst()).combinationsWithReplacement(length: n)
+//	}
 	
 	mutating func insert(_ newElement: Self.Element, _ i: Int) {
 		self.insert(newElement, at: index(self.startIndex, offsetBy: i))
@@ -782,6 +814,134 @@ struct C3: Equatable, Hashable, AdditiveArithmetic {
 	
 	static func - (lhs: C3, rhs: C3) -> C3 {
 		C3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z)
+	}
+	
+	func redirect(to perspective: Int) -> C3 {
+		var new: C3
+		switch perspective % 4 {
+		case 0: new = self
+		case 1: new = C3(x, z, -y)
+		case 2: new = C3(x, -y, -z)
+		default: new = C3(x, -z, y)
+		}
+		
+		switch (perspective / 4) % 4 {
+		case 0: break
+		case 1: new = C3(new.y, -new.x, new.z)
+		case 2: new = C3(-new.x, -new.y, new.z)
+		default: new = C3(-new.y, new.x, new.z)
+		}
+		
+		switch (perspective / 16) % 4 {
+		case 0: break
+		case 1: new = C3(new.z, new.y, -new.x)
+		case 2: new = C3(-new.x, new.y, -new.z)
+		default: new = C3(-new.z, new.y, new.x)
+		}
+		
+		return new
+	}
+}
+
+struct Bound2: Equatable, Hashable {
+	var x: Range<Int>
+	var y: Range<Int>
+	
+	init(_ x: Range<Int>, _ y: Range<Int>) {
+		self.x = x
+		self.y = y
+	}
+	
+	init() {
+		self.x = Int.min..<Int.max
+		self.y = Int.min..<Int.max
+	}
+	
+	func overlap(with other: Bound2) -> Bound2? {
+		guard x.overlaps(other.x) && y.overlaps(other.y) else { return nil }
+		return Bound2(x.clamped(to: other.x), y.clamped(to: other.y))
+	}
+	
+	var count: Int {
+		x.count * y.count
+	}
+}
+
+struct ClosedBound2: Equatable, Hashable {
+	var x: ClosedRange<Int>
+	var y: ClosedRange<Int>
+	
+	init(_ x: ClosedRange<Int>, _ y: ClosedRange<Int>) {
+		self.x = x
+		self.y = y
+	}
+	
+	init() {
+		self.x = Int.min...Int.max
+		self.y = Int.min...Int.max
+	}
+	
+	func overlap(with other: ClosedBound2) -> ClosedBound2? {
+		guard x.overlaps(other.x) && y.overlaps(other.y) else { return nil }
+		return ClosedBound2(x.clamped(to: other.x), y.clamped(to: other.y))
+	}
+	
+	var count: Int {
+		x.count * y.count
+	}
+}
+
+struct Bound3: Equatable, Hashable {
+	var x: Range<Int>
+	var y: Range<Int>
+	var z: Range<Int>
+	
+	init(_ x: Range<Int>, _ y: Range<Int>, _ z: Range<Int>) {
+		self.x = x
+		self.y = y
+		self.z = z
+	}
+	
+	init() {
+		self.x = Int.min..<Int.max
+		self.y = Int.min..<Int.max
+		self.z = Int.min..<Int.max
+	}
+	
+	func overlap(with other: Bound3) -> Bound3? {
+		guard x.overlaps(other.x) && y.overlaps(other.y) && z.overlaps(other.z) else { return nil }
+		return Bound3(x.clamped(to: other.x), y.clamped(to: other.y), z.clamped(to: other.z))
+	}
+	
+	var count: Int {
+		x.count * y.count * z.count
+	}
+}
+
+struct ClosedBound3: Equatable, Hashable {
+	var x: ClosedRange<Int>
+	var y: ClosedRange<Int>
+	var z: ClosedRange<Int>
+	
+	init(_ x: ClosedRange<Int>, _ y: ClosedRange<Int>, _ z: ClosedRange<Int>) {
+		self.x = x
+		self.y = y
+		self.z = z
+	}
+	
+	init() {
+		self.x = Int.min...Int.max
+		self.y = Int.min...Int.max
+		self.z = Int.min...Int.max
+	}
+	
+	func overlap(with other: ClosedBound3) -> ClosedBound3? {
+		guard x.overlaps(other.x) && y.overlaps(other.y) && z.overlaps(other.z) else { return nil }
+		return ClosedBound3(x.clamped(to: other.x), y.clamped(to: other.y), z.clamped(to: other.z))
+	}
+	
+	var count: Int {
+		x.count * y.count * z.count
 	}
 }
 

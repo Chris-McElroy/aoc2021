@@ -390,6 +390,15 @@ public extension Dictionary {
 			self[part[key] as! Key] = part
 		}
 	}
+	
+	init(_ dictArray: [[Self.Key: Self.Value]]) {
+		self.init()
+		for dict in dictArray {
+			for (key, value) in dict {
+				self[key] = value
+			}
+		}
+	}
 }
 
 public extension String {
@@ -737,11 +746,14 @@ struct C2: Equatable, Hashable, AdditiveArithmetic {
 	}
 	
 	static let zeroAdjacents = [(-1,0),(0,-1),(0,1),(1,0)]
-	static let zeroNeighbors = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
+	static let zeroAdjacentsWithSelf = [(-1,0),(0,-1),(0,0),(0,1),(1,0)]
+	// in reading order
+	static let zeroNeighbors = [(-1,-1),(0,-1),(1,-1),(-1,0),(1,0),(-1,1),(0,1),(1,1)]
+	static let zeroNeighborsWithSelf = [(-1,-1),(0,-1),(1,-1),(-1,0),(0,0),(1,0),(-1,1),(0,1),(1,1)]
 	var adjacents: [C2] { C2.zeroAdjacents.map({ C2(x + $0.0, y + $0.1) }) }
 	var neighbors: [C2] { C2.zeroNeighbors.map({ C2(x + $0.0, y + $0.1) }) }
-	var adjacentsWithSelf: [C2] { C2.zeroAdjacents.map({ C2(x + $0.0, y + $0.1) }) + [self] }
-	var neighborsWithSelf: [C2] { C2.zeroNeighbors.map({ C2(x + $0.0, y + $0.1) }) + [self] }
+	var adjacentsWithSelf: [C2] { C2.zeroAdjacentsWithSelf.map({ C2(x + $0.0, y + $0.1) }) }
+	var neighborsWithSelf: [C2] { C2.zeroNeighborsWithSelf.map({ C2(x + $0.0, y + $0.1) }) }
 	
 	static var zero: C2 = C2(0, 0)
 	

@@ -982,7 +982,7 @@ public struct ListIterator<Element>: IteratorProtocol {
 	}
 }
 
-public struct List<Element>: ExpressibleByArrayLiteral, Sequence {
+public struct List<Element>: ExpressibleByArrayLiteral, Sequence, CustomStringConvertible {
 	var head: LinkedNode<Element>?
 	var tail: LinkedNode<Element>?
 	var count: Int
@@ -1064,6 +1064,19 @@ public struct List<Element>: ExpressibleByArrayLiteral, Sequence {
 
 	var last: Element? {
 		return tail?.value
+	}
+	
+	public var description: String {
+		if count == 0 { return "[]" }
+		var d = "["
+		for e in self {
+			if let printable = e as? CustomStringConvertible {
+				d.append(printable.description + ", ")
+			} else {
+				return "Elements not printable. Count: " + String(count)
+			}
+		}
+		return d.dropLast(2) + "]"
 	}
 	
 	mutating func prepend(_ newElement: Element) {
@@ -1253,6 +1266,42 @@ public extension Set {
 		}
 		
 		return found
+	}
+	
+	/// Breadth first search forward only function
+	/// use this when your search can't go backwards, so you don't need to check if you've already been somewhere
+	///
+	/// Starts with the given set
+	///
+	/// Note that this automatically stops when there's nothing left to search!
+	///
+	/// - Parameter search: (expandUsing) Function of the current value.
+	///   Should return all the new values to inpsect as solutions or continue searching with
+	/// - Parameter shouldContinue: (continueWhile) Function of number of steps.
+	///   Should return a bool indicating whether the search should continue.
+	///   Note that whether there are new values to search is handled automatically!
+	///   Implicitly set to return true.
+	/// - Parameter solution: (stopIf)  Function of value, number of steps done.
+	///   Should return true if the search should stop (if this is a solution).
+	///   Implicitly set to return false.
+	func bfsForwardOnly(expandUsing search: (Element) -> [Element], continueWhile shouldContinue: (Int) -> Bool = { _ in true }, stopIf solution: ((Element, Int) -> Bool) = { _,_ in false }) {
+		var steps = 0
+		var current = self
+		
+		while shouldContinue(steps) && !current.isEmpty {
+			steps += 1
+			var next: Self = []
+			
+			for a in current {
+				for b in search(a) {
+					if solution(b, steps) { return }
+					
+					next.insert(b)
+				}
+			}
+			
+			current = next
+		}
 	}
 }
 
